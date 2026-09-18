@@ -1,18 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleDetection": "force",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "compilerOptions": { "target": "ES2022", "module": "NodeNext", "moduleResolution": "NodeNext", "outDir": "dist", "rootDir": "src", "strict": true, "esModuleInterop": true, "skipLibCheck": true, "moduleDetection": "force", "types": ["node"] },
+  "include": ["src/**/*.ts", "test/**/*.ts"], "exclude": ["dist", "node_modules"]
 }
