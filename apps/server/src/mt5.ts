@@ -1,4 +1,4 @@
-import type { AppState, Mt5StatusResponse } from './types.js';
+import type { AppState, Mt5StatusResponse } from '@manyama/shared';
 import { audit } from './state.js';
 const staleMs = 30000;
 export function mt5Status(state: AppState): Mt5StatusResponse { const fresh = state.mt5.lastHeartbeat !== null && Date.now() - Date.parse(state.mt5.lastHeartbeat) <= staleMs; return { status: fresh ? 'connected' : 'disconnected', heartbeat: state.mt5.lastHeartbeat, executionMode: 'PAPER_ONLY', demoMode: true, account: { type: 'demo', broker: 'paper-demo', label: state.mt5.accountLabel }, symbols: Object.keys(state.mt5.symbols), prices: Object.fromEntries(Object.entries(state.mt5.symbols).map(([key, value]) => [key, value.price])) }; }
