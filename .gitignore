@@ -1,0 +1,12 @@
+node_modules
+.dist
+.vite
+dist
+coverage
+.env
+.env.local
+.DS_Store
+apps/**/dist
+apps/**/coverage
+packages/**/dist
+*.log
