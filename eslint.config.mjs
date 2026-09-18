@@ -10,14 +10,14 @@ export default [
     files: ['apps/server/**/*.ts'],
     languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }, globals: globals.node },
     plugins: { '@typescript-eslint': tseslint },
-    rules: { ...tseslint.configs.recommended.rules, '@typescript-eslint/no-explicit-any': 'off' }
+    rules: { ...tseslint.configs.recommended.rules }
   },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     languageOptions: { parser: tsParser, parserOptions: { ecmaVersion: 'latest', sourceType: 'module', ecmaFeatures: { jsx: true } }, globals: globals.browser },
     plugins: { '@typescript-eslint': tseslint, react, 'react-hooks': reactHooks },
     settings: { react: { version: 'detect' } },
-    rules: { ...tseslint.configs.recommended.rules, ...react.configs.recommended.rules, ...reactHooks.configs.recommended.rules, 'react/react-in-jsx-scope': 'off', '@typescript-eslint/no-explicit-any': 'off' }
+    rules: { ...tseslint.configs.recommended.rules, ...react.configs.recommended.rules, ...reactHooks.configs.recommended.rules, 'react/react-in-jsx-scope': 'off' }
   },
   {
     files: ['apps/server/test/**/*.ts'],
