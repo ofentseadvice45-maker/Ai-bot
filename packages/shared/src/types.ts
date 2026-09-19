@@ -1,4 +1,4 @@
-export type ExecutionMode = 'PAPER_ONLY';
+export type ExecutionMode = 'PAPER_ONLY' | 'DEMO' | 'LIVE';
 export type TradeSide = 'BUY' | 'SELL';
 export type TradeStatus = 'INITIAL' | 'BREAKEVEN' | 'PARTIAL' | 'TRAILING' | 'CLOSED';
 export type ScannerStatus = 'VALID_SETUP' | 'WATCHING' | 'NO_SETUP' | 'UNCLEAR';
