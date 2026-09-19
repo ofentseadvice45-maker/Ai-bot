@@ -5,10 +5,10 @@
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace @manyama/server\" \"npm run dev --workspace @manyama/web\"",
-    "build": "npm run build --workspace @manyama/server && npm run build --workspace @manyama/web",
+    "build": "npm run build --workspace @manyama/shared && npm run build --workspace @manyama/server && npm run build --workspace @manyama/web",
     "test": "npm run test --workspace @manyama/server",
     "lint": "eslint .",
-    "typecheck": "npm run typecheck --workspace @manyama/server && npm run typecheck --workspace @manyama/web"
+    "typecheck": "npm run typecheck --workspace @manyama/shared && npm run build --workspace @manyama/shared && npm run typecheck --workspace @manyama/server && npm run typecheck --workspace @manyama/web"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",
