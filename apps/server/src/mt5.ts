@@ -1,9 +1,83 @@
 import type { AppState, Mt5StatusResponse } from '@manyama/shared';
 import { audit } from './state.js';
+
 const staleMs = 30000;
 const allowedSymbols = ['XAUUSD', 'BTCUSD'] as const;
 type HeartbeatBody = { terminal?: string; accountLabel?: string; symbols?: string[]; prices?: Record<string, number>; timestamp?: string };
-function heartbeatTime(timestamp?: string): string { if (timestamp === undefined) return new Date().toISOString(); const parsed = Date.parse(timestamp); if (Number.isNaN(parsed)) throw new Error('Invalid MT5 heartbeat timestamp'); return new Date(parsed).toISOString(); }
-export function mt5Status(state: AppState): Mt5StatusResponse { const fresh = state.mt5.lastHeartbeat !== null && Date.now() - Date.parse(state.mt5.lastHeartbeat) <= staleMs; return { status: fresh ? 'connected' : 'disconnected', heartbeat: state.mt5.lastHeartbeat, executionMode: 'PAPER_ONLY', demoMode: true, account: { type: 'demo', broker: 'paper-demo', label: state.mt5.accountLabel }, symbols: Object.keys(state.mt5.symbols), prices: Object.fromEntries(Object.entries(state.mt5.symbols).map(([key, value]) => [key, value.price])) }; }
-export function heartbeat(state: AppState, body: HeartbeatBody): Mt5StatusResponse { const heartbeatAt = heartbeatTime(body.timestamp); state.mt5.lastHeartbeat = heartbeatAt; state.mt5.terminal = body.terminal; state.mt5.accountLabel = body.accountLabel; for (const symbol of body.symbols ?? allowedSymbols) { if (!allowedSymbols.includes(symbol as typeof allowedSymbols[number])) continue; const reportedPrice = body.prices?.[symbol]; if (reportedPrice !== undefined && (!Number.isFinite(reportedPrice) || reportedPrice <= 0)) throw new Error('Invalid MT5 price'); const price = reportedPrice ?? state.markets[symbol]?.price ?? 0; state.mt5.symbols[symbol] = { price, updatedAt: heartbeatAt }; if (state.markets[symbol] && reportedPrice !== undefined) { state.markets[symbol].price = reportedPrice; state.markets[symbol].source = 'MT5'; } } audit(state, 'MT5_CONNECTED', 'MT5 demo heartbeat received'); return mt5Status(state); }
-export function report(state: AppState, body: { symbol: string; price: number }): Mt5StatusResponse { if (!allowedSymbols.includes(body.symbol as typeof allowedSymbols[number]) || !Number.isFinite(body.price) || body.price <= 0) throw new Error('Invalid MT5 price report'); const now = new Date().toISOString(); state.mt5.symbols[body.symbol] = { price: body.price, updatedAt: now }; state.markets[body.symbol].price = body.price; state.markets[body.symbol].source = 'MT5'; return mt5Status(state); }
+
+function heartbeatTime(timestamp?: string): string {
+  if (timestamp === undefined) return new Date().toISOString();
+  const parsed = Date.parse(timestamp);
+  if (Number.isNaN(parsed)) throw new Error('Invalid MT5 heartbeat timestamp');
+  return new Date(parsed).toISOString();
+}
+
+export function mt5Status(state: AppState): Mt5StatusResponse {
+  const fresh = state.mt5.lastHeartbeat !== null && Date.now() - Date.parse(state.mt5.lastHeartbeat) <= staleMs;
+  return {
+    status: fresh ? 'connected' : 'disconnected',
+    heartbeat: state.mt5.lastHeartbeat,
+    executionMode: 'PAPER_ONLY',
+    demoMode: true,
+    account: { type: 'demo', broker: 'paper-demo', label: state.mt5.accountLabel },
+    symbols: Object.keys(state.mt5.symbols),
+    prices: Object.fromEntries(Object.entries(state.mt5.symbols).map(([key, value]) => [key, value.price]))
+  };
+}
+
+export function heartbeat(state: AppState, body: HeartbeatBody): Mt5StatusResponse {
+  const heartbeatAt = heartbeatTime(body.timestamp);
+  state.mt5.lastHeartbeat = heartbeatAt;
+  state.mt5.terminal = body.terminal;
+  state.mt5.accountLabel = body.accountLabel;
+  for (const symbol of body.symbols ?? allowedSymbols) {
+    if (!allowedSymbols.includes(symbol as typeof allowedSymbols[number])) continue;
+    const reportedPrice = body.prices?.[symbol];
+    if (reportedPrice !== undefined && (!Number.isFinite(reportedPrice) || reportedPrice <= 0)) throw new Error('Invalid MT5 price');
+    const price = reportedPrice ?? state.markets[symbol]?.price ?? 0;
+    state.mt5.symbols[symbol] = { price, updatedAt: heartbeatAt };
+    if (state.markets[symbol] && reportedPrice !== undefined) {
+      state.markets[symbol].price = reportedPrice;
+      state.markets[symbol].source = 'MT5';
+    }
+  }
+  audit(state, 'MT5_CONNECTED', 'MT5 demo heartbeat received');
+  return mt5Status(state);
+}
+
+export function report(state: AppState, body: { symbol: string; price: number }): Mt5StatusResponse {
+  if (!allowedSymbols.includes(body.symbol as typeof allowedSymbols[number]) || !Number.isFinite(body.price) || body.price <= 0) {
+    throw new Error('Invalid MT5 price report');
+  }
+  const now = new Date().toISOString();
+  state.mt5.symbols[body.symbol] = { price: body.price, updatedAt: now };
+  state.markets[body.symbol].price = body.price;
+  state.markets[body.symbol].source = 'MT5';
+  return mt5Status(state);
+}
+
+export function mt5Command(state: AppState) {
+  const setup = state.scanner.activeSetup;
+  if (state.botStatus !== 'RUNNING' || state.emergency || !setup || setup.status !== 'VALID_SETUP' || setup.confidence < 75) {
+    return { executionMode: 'DEMO', liveEnabled: false, signal: null };
+  }
+  if (![setup.entry, setup.stopLoss, setup.takeProfit1, setup.takeProfit2, setup.rr].every((n) => Number.isFinite(n) && n > 0)) {
+    return { executionMode: 'DEMO', liveEnabled: false, signal: null };
+  }
+  const id = [setup.symbol, setup.direction, setup.entry, setup.stopLoss, setup.takeProfit2].join('-');
+  return {
+    executionMode: 'DEMO',
+    liveEnabled: false,
+    signal: {
+      id,
+      symbol: setup.symbol,
+      direction: setup.direction,
+      entry: setup.entry,
+      stopLoss: setup.stopLoss,
+      takeProfit1: setup.takeProfit1,
+      takeProfit2: setup.takeProfit2,
+      rr: setup.rr,
+      confidence: setup.confidence
+    }
+  };
+}
