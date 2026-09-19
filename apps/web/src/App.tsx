@@ -19,7 +19,7 @@ const demoState: AppState = {
   mt5: { lastHeartbeat: null, terminal: 'Not connected', accountLabel: 'MT5 DEMO', symbols: {} }
 };
 
-type ScanState = { fileName: string; preview: string; symbol: 'XAUUSD' | 'BTCUSD'; timeframe: 'M5' | 'M15' | 'H1' | 'H4'; status: string; reasons: string[]; invalidation?: string };
+type ScanState = { fileName: string; preview: string; symbol: 'XAUUSD' | 'BTCUSD'; timeframe: 'M5' | 'M15' | 'H1' | 'H4'; status: string; reasons: string[]; invalidation?: string; direction?: string; h4Bias?: string; entry?: number; stopLoss?: number; takeProfit1?: number; takeProfit2?: number; rr?: number; confidence?: number; checks?: { name: string; passed: boolean; detail: string }[] };
 
 export default function App() {
   const [state, setState] = useState<AppState>(demoState);
@@ -67,10 +67,10 @@ export default function App() {
           method: 'POST',
           body: JSON.stringify({ imageBase64: preview, imageName: file.name, symbol: scanSymbol, timeframe: scanTf })
         });
-        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: result.status, reasons: result.reasons ?? [], invalidation: result.invalidation });
+        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: result.status, reasons: result.reasons ?? [], invalidation: result.invalidation, direction: result.direction, h4Bias: result.h4Bias, entry: result.entry, stopLoss: result.stopLoss, takeProfit1: result.takeProfit1, takeProfit2: result.takeProfit2, rr: result.rr, confidence: result.confidence, checks: result.checks ?? [] });
         setMessage(`Chart scan complete · ${result.status}`);
       } catch {
-        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: 'PREVIEW ONLY', reasons: ['Chart image loaded successfully.', 'Connect the Manyama backend to run the full analysis engine.', 'No trade is created from screenshot analysis.'] });
+        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: 'PREVIEW ONLY', reasons: ['Chart image loaded successfully.', 'Backend connected, but the vision provider must be configured.', 'No trade is created from screenshot analysis.'] });
         setMessage('Chart loaded in preview mode');
       } finally { setScanning(false); }
     };
@@ -126,7 +126,7 @@ export default function App() {
 
       {scan && <section className="glass scan-result">
         <div className="scan-image-wrap"><img src={scan.preview} alt="Uploaded trading chart" /><div className="scan-label">{scan.symbol} · {scan.timeframe}</div></div>
-        <div className="scan-report"><div className="section-head"><span className="eyebrow">VISION REPORT</span><span className={scan.status === 'VALID_SETUP' ? 'report-good' : 'report-neutral'}>{scan.status}</span></div><h3>{scan.status === 'VALID_SETUP' ? 'Candidate setup detected' : 'No automatic entry'}</h3><div className="report-list">{scan.reasons.map((reason, i) => <div key={i}><i>+</i><span>{reason}</span></div>)}</div>{scan.invalidation && <div className="invalidation"><small>INVALIDATION</small><span>{scan.invalidation}</span></div>}<button className="secondary" onClick={() => setScan(null)}>CLEAR SCAN</button></div>
+        <div className="scan-report"><div className="section-head"><span className="eyebrow">VISION REPORT</span><span className={scan.status === 'VALID_SETUP' ? 'report-good' : 'report-neutral'}>{scan.status}</span></div><h3>{scan.status === 'VALID_SETUP' ? 'Candidate setup detected' : 'Validation gate blocked entry'}</h3><div className="setup-grid"><span>DIRECTION <b>{scan.direction ?? '—'}</b></span><span>HTF BIAS <b>{scan.h4Bias ?? '—'}</b></span><span>ENTRY <b>{scan.entry ?? '—'}</b></span><span>SL <b>{scan.stopLoss ?? '—'}</b></span><span>TP1 <b>{scan.takeProfit1 ?? '—'}</b></span><span>TP2 <b>{scan.takeProfit2 ?? '—'}</b></span><span>R:R <b>{scan.rr ? scan.rr.toFixed(2) : '—'}</b></span><span>CONFIDENCE <b>{scan.confidence ?? 0}%</b></span></div><div className="report-list">{(scan.checks ?? []).map((check, i) => <div key={i}><i>{check.passed ? '✓' : '✕'}</i><span><b>{check.name}</b> · {check.detail}</span></div>)}</div><div className="report-list">{scan.reasons.map((reason, i) => <div key={i}><i>!</i><span>{reason}</span></div>)}</div>{scan.invalidation && <div className="invalidation"><small>INVALIDATION</small><span>{scan.invalidation}</span></div>}<button className="secondary" onClick={() => setScan(null)}>CLEAR SCAN</button></div>
       </section>}
 
       {setup && <section className="glass setup"><div className="setup-head"><div><span className="eyebrow">ACTIVE SETUP · {setup.status}</span><h2>{setup.direction} {setup.symbol}</h2></div><b className="setup-confidence">{setup.confidence}%</b></div><div className="setup-grid"><span>ENTRY <b>{setup.entry}</b></span><span>SL <b>{setup.stopLoss}</b></span><span>TP1 <b>{setup.takeProfit1}</b></span><span>TP2 <b>{setup.takeProfit2}</b></span><span>R:R <b>{setup.rr}</b></span><span>BOS <b>{setup.bos ? 'YES' : 'NO'}</b></span></div><p>{setup.reasons.join(' · ')}</p></section>}
