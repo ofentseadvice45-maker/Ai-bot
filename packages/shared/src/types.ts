@@ -12,4 +12,27 @@ export interface AuditEvent { id: string; type: string; message: string; created
 export interface AppState { executionMode: ExecutionMode; botStatus: BotStatus; emergency: boolean; risk: RiskSettings; scanner: { status: ScannerStatus; confidence: number; activeSetup?: ScannerSetup }; markets: Record<string, MarketSnapshot>; trades: Trade[]; realizedPnl: number; audit: AuditEvent[]; mt5: { lastHeartbeat: string | null; terminal?: string; accountLabel?: string; symbols: Record<string, { price: number; updatedAt: string }> }; }
 export interface Mt5StatusResponse { status: 'connected' | 'disconnected'; heartbeat: string | null; executionMode: ExecutionMode; demoMode: true; account: { type: 'demo'; broker: 'paper-demo'; label?: string }; symbols: string[]; prices: Record<string, number>; }
 export interface ChartAnalysisRequest { imageBase64: string; imageName?: string; symbol?: string; timeframe?: string; }
-export interface ChartAnalysisResult { status: ScannerStatus; valid: boolean; symbol?: string; timeframe?: string; reasons: string[]; invalidation?: string; scannedAt: string; }
+export interface ChartValidationCheck { name: string; passed: boolean; detail: string; }
+export interface ChartAnalysisResult {
+  status: ScannerStatus;
+  valid: boolean;
+  symbol?: string;
+  timeframe?: string;
+  direction?: 'LONG' | 'SHORT' | 'NEUTRAL';
+  h4Bias?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  h1Structure?: boolean;
+  bos?: boolean;
+  supplyDemand?: boolean;
+  liquidity?: boolean;
+  momentum?: boolean;
+  entry?: number;
+  stopLoss?: number;
+  takeProfit1?: number;
+  takeProfit2?: number;
+  rr?: number;
+  confidence?: number;
+  checks?: ChartValidationCheck[];
+  reasons: string[];
+  invalidation?: string;
+  scannedAt: string;
+}
