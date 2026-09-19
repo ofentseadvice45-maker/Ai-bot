@@ -117,7 +117,10 @@ export class OpenAIChartAnalysisService implements ChartAnalysisService {
 
   async analyze(input: ChartAnalysisRequest): Promise<ChartAnalysisResult> {
     const scannedAt = new Date().toISOString();
-    if (!input.imageBase64.startsWith('data:image/')) return { status: 'UNCLEAR', valid: false, reasons: ['A valid image upload is required'], scannedAt };
+    const imageBase64 = typeof input?.imageBase64 === 'string' ? input.imageBase64 : '';
+    if (!imageBase64.startsWith('data:image/')) {
+      return { status: 'UNCLEAR', valid: false, reasons: ['A valid image upload is required'], scannedAt };
+    }
     if (!input.symbol || !input.timeframe) return { status: 'UNCLEAR', valid: false, reasons: ['Symbol and timeframe are required'], scannedAt };
     if (!this.apiKey) return { status: 'UNCLEAR', valid: false, symbol: input.symbol, timeframe: input.timeframe, reasons: ['OPENAI_API_KEY is not configured on the backend'], invalidation: 'AI analysis is unavailable; do not trade', scannedAt };
 
@@ -137,7 +140,7 @@ For numeric fields use null when the chart does not make the level reliable. Con
           role: 'user',
           content: [
             { type: 'input_text', text: prompt },
-            { type: 'input_image', image_url: input.imageBase64, detail: 'high' }
+            { type: 'input_image', image_url: imageBase64, detail: 'high' }
           ]
         }],
         max_output_tokens: 1200
@@ -153,8 +156,7 @@ For numeric fields use null when the chart does not make the level reliable. Con
     const outputText = data.output_text ?? data.output?.flatMap(item => item.content ?? []).map(item => item.text ?? '').join('') ?? '';
     const finding = parseVisionText(outputText);
     if (input.timeframe === 'H4') this.h4BiasBySymbol.set(input.symbol, finding.h4Bias);
-    const result = validateFinding(input, finding, this.h4BiasBySymbol.get(input.symbol));
-    return result;
+    return validateFinding(input, finding, this.h4BiasBySymbol.get(input.symbol));
   }
 }
 
