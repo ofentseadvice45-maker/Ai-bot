@@ -1,2 +1,2 @@
-import type { AppState, ScannerSetup, Trade, TradeStatus, ScannerStatus, RiskSettings, ChartAnalysisResult, Mt5StatusResponse, CandleFeatures } from '../../../packages/shared/src/types.js';
-export type { AppState, ScannerSetup, Trade, TradeStatus, ScannerStatus, RiskSettings, ChartAnalysisResult, Mt5StatusResponse, CandleFeatures };
+export type { AppState, AuditEvent, ScannerSetup, Trade, TradeSide, TradeStatus, ScannerStatus, RiskSettings, ChartAnalysisResult, ChartAnalysisRequest, ChartValidationCheck, Mt5StatusResponse, CandleFeatures } from '@manyama/shared';
+export type { ExecutionMode, BotStatus, MarketSnapshot } from '@manyama/shared';
