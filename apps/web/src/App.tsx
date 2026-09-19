@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AppState, ScannerSetup } from '../../../packages/shared/src/types';
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\\/$/, '');
 const api = async (url: string, options?: RequestInit) => {
-  const response = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const response = await fetch(`${API_BASE}${url}`, { headers: { 'Content-Type': 'application/json' }, ...options });
   if (!response.ok) throw new Error('API unavailable');
   return response.json();
 };
