@@ -139,7 +139,7 @@ describe('paper flow and hard safety', () => {
     expect((await post('/api/scan', { ...setup, symbol: 'BTCUSD' })).response.status).toBe(200);
     expect((await post('/api/scan', setup)).response.status).toBe(400);
     expect((await post('/api/scan', { ...setup, stopLoss: 0 })).response.status).toBe(400);
-    const { stopLoss: _omitted, ...missingStop } = setup;
+    const missingStop = { ...setup }; delete (missingStop as { stopLoss?: number }).stopLoss;
     expect((await post('/api/scan', missingStop)).response.status).toBe(400);
   });
 
