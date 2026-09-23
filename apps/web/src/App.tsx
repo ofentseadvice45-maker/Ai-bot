@@ -70,9 +70,10 @@ export default function App() {
         });
         setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: result.status, reasons: result.reasons ?? [], invalidation: result.invalidation, direction: result.direction, h4Bias: result.h4Bias, entry: result.entry, stopLoss: result.stopLoss, takeProfit1: result.takeProfit1, takeProfit2: result.takeProfit2, rr: result.rr, confidence: result.confidence, checks: result.checks ?? [] });
         setMessage(`Chart scan complete · ${result.status}`);
-      } catch {
-        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: 'PREVIEW ONLY', reasons: ['Chart image loaded successfully.', 'Backend connected, but the vision provider must be configured.', 'No trade is created from screenshot analysis.'] });
-        setMessage('Chart loaded in preview mode');
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : 'Chart analysis request failed.';
+        setScan({ fileName: file.name, preview, symbol: scanSymbol, timeframe: scanTf, status: 'ANALYSIS ERROR', reasons: ['Chart image loaded successfully.', reason, 'No trade is created from screenshot analysis.'] });
+        setMessage('Chart analysis failed — inspect the report');
       } finally { setScanning(false); }
     };
     reader.readAsDataURL(file);
