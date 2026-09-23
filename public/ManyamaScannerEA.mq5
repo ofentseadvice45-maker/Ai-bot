@@ -164,6 +164,78 @@ void SendHeartbeat()
    WebRequest("POST",ApiBaseUrl+"/api/mt5/heartbeat","Content-Type: application/json\r\n",5000,data,result,responseHeaders);
   }
 
+bool FindBrokerSymbol(string baseSymbol,string &brokerSymbol)
+  {
+   if(SymbolSelect(baseSymbol,true))
+     {
+      brokerSymbol=baseSymbol;
+      return true;
+     }
+
+   int total=SymbolsTotal(false);
+   for(int i=0;i<total;i++)
+     {
+      string name=SymbolName(i,false);
+      if(StringFind(name,baseSymbol)==0)
+        {
+         brokerSymbol=name;
+         SymbolSelect(brokerSymbol,true);
+         return true;
+        }
+     }
+
+   return false;
+  }
+
+void SendMarketUpdate(string baseSymbol)
+  {
+   string brokerSymbol;
+   if(!FindBrokerSymbol(baseSymbol,brokerSymbol))
+     {
+      Print("Manyama market update: symbol not found for ",baseSymbol);
+      return;
+     }
+
+   MqlTick tick;
+   if(!SymbolInfoTick(brokerSymbol,tick))
+     {
+      Print("Manyama market update: no tick for ",brokerSymbol);
+      return;
+     }
+
+   double price=tick.bid;
+   if(price<=0) price=tick.last;
+   if(price<=0)
+     {
+      Print("Manyama market update: invalid price for ",brokerSymbol);
+      return;
+     }
+
+   string timestamp=TimeToString(TimeCurrent(),TIME_DATE|TIME_SECONDS);
+   string json="{\"symbol\":\""+baseSymbol+"\",\"price\":"+DoubleToString(price,8)+",\"timestamp\":\""+timestamp+"\",\"source\":\"PAPER\"}";
+
+   char data[];
+   StringToCharArray(json,data,0,StringLen(json));
+   char result[];
+   string responseHeaders;
+
+   ResetLastError();
+   int status=WebRequest(
+      "POST",
+      ApiBaseUrl+"/api/market/update",
+      "Content-Type: application/json\r\n",
+      5000,
+      data,
+      result,
+      responseHeaders
+   );
+
+   int error=GetLastError();
+   Print("Manyama market update: ",baseSymbol," broker=",brokerSymbol,
+         " price=",DoubleToString(price,8),
+         " HTTP=",status," error=",error);
+  }
+
 void TryOpenSignal(string json)
   {
    if(CountOpenPositions()>=MaxOpenTrades) return;
@@ -249,6 +321,8 @@ void OnDeinit(const int reason)
 void OnTimer()
   {
    SendHeartbeat();
+   SendMarketUpdate("XAUUSD");
+   SendMarketUpdate("BTCUSD");
    ManagePositions();
 
    if(!IsExecutionAllowed()) return;
